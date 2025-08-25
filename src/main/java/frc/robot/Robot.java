@@ -8,6 +8,10 @@ import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
+import edu.wpi.first.wpilibj.DriverStation;
+
+import frc.robot.RobotContainer;
+
 /**
  * The methods in this class are called automatically corresponding to each mode, as described in
  * the TimedRobot documentation. If you change the name of this class or the package after creating
@@ -17,6 +21,8 @@ public class Robot extends TimedRobot {
   private Command m_autonomousCommand;
 
   private final RobotContainer m_robotContainer;
+  boolean m_hasAutoRn = false;
+  boolean m_enabled = false;
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -47,7 +53,11 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    m_enabled = false;
+    m_robotContainer.ConfigureRobotLEDs();
+    m_robotContainer.StopAll();
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -55,6 +65,9 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+    m_robotContainer.SetHighSpeed();
+    m_robotContainer.StartUp();
+
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     // schedule the autonomous command (example)

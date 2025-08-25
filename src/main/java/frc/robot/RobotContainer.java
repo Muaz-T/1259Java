@@ -35,6 +35,7 @@ import edu.wpi.first.util.datalog.DoubleLogEntry;
 import edu.wpi.first.wpilibj.DataLogManager;
 import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.wpilibj.Timer;
+import java.util.Set;
 //___________________________________________________________________________________________________________________________________________________________________________________
 
 
@@ -696,8 +697,7 @@ public void ConfigPrimaryButtonBindings(){
     primary.back().onTrue(new ClimbRetractCommand(this));
     primary.start().onTrue(m_toggleSlowSpeed);
     primary.leftBumper().onTrue(m_toggleFieldRelative);
-
-//TODO ADD THE FOLLOW PATH COMMAND
+    primary.rightBumper().onTrue(new DeferredCommand(() -> this.GetFollowPathCommandImpl(), Set.of(m_drive)));
 
     primary.povUp().onTrue(new StopAllCommand(this));
     primary.povLeft().onTrue(m_resetOdo);
@@ -782,6 +782,25 @@ public void ConfigButtonBoxBindings(){
 //   }.ToPtr());
 
 //TODO FIGURE THIS OUT!!!!!!!!
+
+buttonBox.povRight().onTrue(
+  new SequentialCommandGroup(
+      new DeferredCommand(() -> this.GetFollowPathCommandImpl(), Set.of(m_drive)),
+      new CoralPrepCommand(this),
+      new ConditionalCommand(
+          new SequentialCommandGroup(
+              new ElevatorGoToCommand(this, Constants.OperatorConstants.ELevels.L4, true),
+              new InstantCommand(() -> m_coral.DeployManipulator(), m_coral)
+          ),
+          new InstantCommand(() -> m_coral.RetractManipulator(), m_coral),
+          () -> (m_elevator.GetPresetLevel() == Constants.OperatorConstants.ELevels.L4 || m_elevator.GetPresetLevel() == Constants.OperatorConstants.ELevels.L1)
+      ),
+      new CoralEjectCommand(this),
+      new WaitCommand(0.25),
+      new CoralEjectPostCommand(this),
+      m_elevL1
+  )
+);
 
 // () -> m_drive.ToggleSlowSpeed(), m_drive     new InstantCommand(() -> m_coral.DeployManipulatorAlgae(), m_coral);
 
@@ -935,6 +954,18 @@ public void ConfigureRobotLEDs(){
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
 
+ public void StopAll()
+{
+  m_intake.Stop();
+  m_coral.Stop();
+  m_elevator.Stop();
+  //m_climb.Stop();
+  m_drive.Stop();
+
+  m_led.SetAnimation(m_led.GetDefaultColor(), LEDSubsystem.EAnimation.kSolid);
+  m_led.SetCurrentAction(LEDSubsystem.ECurrentAction.kIdle);
+  // TODO scheduler cancel???
+}
 
 
 
